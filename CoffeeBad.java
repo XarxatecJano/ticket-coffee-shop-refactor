@@ -25,6 +25,56 @@ public class CoffeeBad {
 
   private static final double ROUNDING_FACTOR = 100.0;
 
+  private static double calculateExtrasPrice(String extras){
+    double extrasPrice = 0;
+    if(extras != null && extras.length() > 0){
+        String[] extraParts = extras.split(",");
+        for(int k = 0; k < extraParts.length; k++){
+          if(extraParts[k].equals("milk")){
+            extrasPrice += EXTRA_MILK;
+          } else if(extraParts[k].equals("shot")){
+            extrasPrice += EXTRA_SHOT;
+          } else if(extraParts[k].equals("syrup")){
+            extrasPrice += EXTRA_SYRUP;
+          }
+        }
+      }
+
+      return extrasPrice;
+  }
+
+  private static double calculateBasePrice(String product, String size, boolean happyHour){
+    double basePrice = 0;
+
+    if(product.equals("coffee")) {
+        if(size.equals("S")){
+          basePrice = COFFEE_S;
+        } else if(size.equals("M")) {
+            basePrice = COFFEE_M;
+        } else {
+          basePrice = COFFEE_L;
+        }
+
+        if(happyHour){ 
+          basePrice = basePrice - (basePrice * HAPPY_HOUR_DISCOUNT); 
+        }
+
+      } else if(product.equals("tea")) {
+        if(size.equals("S")){
+          basePrice = TEA_S;
+        } else if(size.equals("M")){
+          basePrice = TEA_M;
+        }else{
+          basePrice = TEA_L;
+        }
+
+      } else if(product.equals("muffin")) {
+        basePrice = MUFFIN_PRICE;
+      }
+
+      return basePrice;
+  }
+
   public static double calculateOrderTotal(Map<String,Object> order){
     double subTotal = 0;
 
@@ -39,57 +89,15 @@ public class CoffeeBad {
       int quantity = Integer.parseInt(itemParts.length > 2 && itemParts[2].length() > 0 ? itemParts[2] : "1");
       String extras = itemParts.length > 3 ? itemParts[3] : "";
 
-      double basePrice = 0;
-
-      if(product.equals("coffee")){
-        if(size.equals("S")){
-          basePrice = COFFEE_S;
-        } else if(size.equals("M")) {
-            basePrice = COFFEE_M;
-        } else {
-          basePrice = COFFEE_L;
-        }
-
-        if(Boolean.TRUE.equals(order.get("happyHour"))){ 
-          basePrice = basePrice - (basePrice * HAPPY_HOUR_DISCOUNT); 
-        }
-
-      }else if(product.equals("tea")){
-        if(size.equals("S")){
-          basePrice = TEA_S;
-        } else if(size.equals("M")){
-          basePrice = TEA_M;
-        }else{
-          basePrice = TEA_L;
-        }
-
-      }else if(product.equals("muffin")){
-        basePrice = MUFFIN_PRICE;
-
-      }else{
-        basePrice = 0;
-      }
-
-      double extrasPrice = 0;
-
-      if(extras != null && extras.length() > 0){
-        String[] extraParts=extras.split(",");
-
-        for(int k=0;k<extraParts.length;k++){
-          if(extraParts[k].equals("milk")){
-            extrasPrice += EXTRA_MILK;
-          } else if(extraParts[k].equals("shot")){
-            extrasPrice += EXTRA_SHOT;
-          } else if(extraParts[k].equals("syrup")){
-            extrasPrice += EXTRA_SYRUP;
-          }
-        }
-      }
+      boolean happyHour = Boolean.TRUE.equals(order.get("happyHour"));
+      double basePrice = calculateBasePrice(product, size, happyHour);
+      double extrasPrice = calculateExtrasPrice(extras);
 
       subTotal = subTotal + ( (basePrice * quantity) + (extrasPrice * quantity) );
     }
 
     String coupon = (String) order.get("coupon");
+    
     if(coupon != null && !coupon.equals("")){
       if(coupon.equals("SAVE10")){
         subTotal = subTotal - (subTotal * SAVE10_DISCOUNT);
@@ -105,7 +113,6 @@ public class CoffeeBad {
         if(found){ 
           subTotal = subTotal - MUFFIN_PRICE; 
         }
-
       }
     }
 
