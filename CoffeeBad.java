@@ -25,6 +25,30 @@ public class CoffeeBad {
 
   private static final double ROUNDING_FACTOR = 100.0;
 
+  private static double applyCouponDiscount(double subTotal, String coupon, List<String> items){
+    if(coupon != null && !coupon.equals("")){
+      if(coupon.equals("SAVE10")){
+        subTotal = subTotal - (subTotal * SAVE10_DISCOUNT);
+      } else if(coupon.equals("FREEMUFFIN")) {
+        for(String it : items){
+          if(it.startsWith("muffin|")){ 
+            return subTotal - MUFFIN_PRICE;
+          }
+        }
+      }
+    }
+
+    return subTotal;
+  }
+  
+  private static double applyVipDiscount(double subTotal, boolean vip){
+    if(vip && subTotal > VIP_THRESHOLD){
+      return subTotal - VIP_THRESHOLD;
+    }
+
+    return subTotal;
+  }
+
   private static double calculateExtrasPrice(String extras){
     double extrasPrice = 0;
     if(extras != null && extras.length() > 0){
@@ -97,31 +121,10 @@ public class CoffeeBad {
     }
 
     String coupon = (String) order.get("coupon");
-    
-    if(coupon != null && !coupon.equals("")){
-      if(coupon.equals("SAVE10")){
-        subTotal = subTotal - (subTotal * SAVE10_DISCOUNT);
-      } else if(coupon.equals("FREEMUFFIN")) {
-        boolean found = false;
-        for(String it : items){
-          if(it.startsWith("muffin|")){ 
-            found=true; 
-            break; 
-          }
-        }
-
-        if(found){ 
-          subTotal = subTotal - MUFFIN_PRICE; 
-        }
-      }
-    }
-
     Boolean vip = (Boolean) order.get("vip");
-    if(Boolean.TRUE.equals(vip)){
-      if(subTotal > VIP_THRESHOLD){ 
-        subTotal = subTotal - VIP_DISCOUNT; 
-      }
-    }
+    
+    subTotal = applyCouponDiscount(subTotal, coupon, items);
+    subTotal = applyVipDiscount(subTotal, Boolean.TRUE.equals(vip));
 
     subTotal = subTotal + (subTotal * VAT_RATE);
     subTotal = Math.round(subTotal * ROUNDING_FACTOR) / ROUNDING_FACTOR;
