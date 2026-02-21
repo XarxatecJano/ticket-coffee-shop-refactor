@@ -25,13 +25,13 @@ public class CoffeeBad {
 
   private static final double ROUNDING_FACTOR = 100.0;
 
-  private static class ParsedItem {
+  private static class OrderItem {
     String product;
     String size;
     int quantity;
     String extras;
 
-    ParsedItem(String product, String size, int quantity, String extras){
+    OrderItem(String product, String size, int quantity, String extras){
       this.product = product;
       this.size = size;
       this.quantity = quantity;
@@ -39,7 +39,37 @@ public class CoffeeBad {
     }
   }
 
-  private static ParsedItem parseItem(String item){
+  private static class Order {
+    List<OrderItem> items;
+    String coupon;
+    boolean vip;
+    boolean happyHour;
+
+    Order(List<OrderItem> items, String coupon, boolean vip, boolean happyHour){
+      this.items = items;
+      this.coupon = coupon;
+      this.vip = vip;
+      this.happyHour = happyHour;
+    }
+
+    static Order fromMap(Map<String, Object> map){
+      List<String> items = (List<String>) map.get("items");
+
+      List<OrderItem> parsedItem = new ArrayList<>();
+      for(String item : items){
+        parsedItem.add(parseItem(item));
+      }
+
+      String coupon = (String) map.get("coupon");
+      boolean vip = Boolean.TRUE.equals(map.get("vip"));
+      boolean happyHour = Boolean.TRUE.equals(map.get("happyHour"));
+
+      return new Order(parsedItem, coupon, vip, happyHour);
+    }
+
+  }
+
+  private static OrderItem parseItem(String item){
     String[] itemParts = item.split("\\|");
 
     String product = itemParts[0];
@@ -47,16 +77,18 @@ public class CoffeeBad {
     int quantity = Integer.parseInt(itemParts.length > 2 && itemParts[2].length() > 0 ? itemParts[2] : "1");
     String extras = itemParts.length > 3 ? itemParts[3] : "";
 
-    return new ParsedItem(product, size, quantity, extras);
+    return new OrderItem(product, size, quantity, extras);
   }
 
-  private static double applyCouponDiscount(double subTotal, String coupon, List<String> items){
+  private static double applyCouponDiscount(double subTotal, Order order){
+    String coupon = order.coupon;
+    List<OrderItem> items = order.items;
     if(coupon != null && !coupon.equals("")){
       if(coupon.equals("SAVE10")){
         subTotal = subTotal - (subTotal * SAVE10_DISCOUNT);
       } else if(coupon.equals("FREEMUFFIN")) {
-        for(String it : items){
-          if(it.startsWith("muffin|")){ 
+        for(OrderItem parseItem : items){
+          if(parseItem.product.equals("muffin")){ 
             return subTotal - MUFFIN_PRICE;
           }
         }
@@ -68,7 +100,7 @@ public class CoffeeBad {
   
   private static double applyVipDiscount(double subTotal, boolean vip){
     if(vip && subTotal > VIP_THRESHOLD){
-      return subTotal - VIP_THRESHOLD;
+      return subTotal - VIP_DISCOUNT;
     }
 
     return subTotal;
@@ -124,46 +156,45 @@ public class CoffeeBad {
       return basePrice;
   }
 
-  public static double calculateOrderTotal(Map<String,Object> order){
+  private static double calculateOrderTotal(Order order){
     double subTotal = 0;
 
-    List<String> items = (List<String>) order.get("items");
+    List<OrderItem> items = order.items;
 
     for(int i=0; i<items.size(); i++){
-      String item = items.get(i);
-      
-      ParsedItem parsedItem = parseItem(item); 
+      OrderItem parsedItem = items.get(i);
 
-      boolean happyHour = Boolean.TRUE.equals(order.get("happyHour"));
+      boolean happyHour = order.happyHour;
       double basePrice = calculateBasePrice(parsedItem.product, parsedItem.size, happyHour);
       double extrasPrice = calculateExtrasPrice(parsedItem.extras);
 
-      subTotal = subTotal + ( (basePrice * parsedItem.quantity) + (extrasPrice * parsedItem.quantity) );
+      subTotal += (basePrice * parsedItem.quantity) + (extrasPrice * parsedItem.quantity);
     }
-
-    String coupon = (String) order.get("coupon");
-    Boolean vip = (Boolean) order.get("vip");
     
-    subTotal = applyCouponDiscount(subTotal, coupon, items);
-    subTotal = applyVipDiscount(subTotal, Boolean.TRUE.equals(vip));
+    subTotal = applyCouponDiscount(subTotal, order);
+    subTotal = applyVipDiscount(subTotal, order.vip);
 
     subTotal = subTotal + (subTotal * VAT_RATE);
     subTotal = Math.round(subTotal * ROUNDING_FACTOR) / ROUNDING_FACTOR;
     return subTotal;
   }
 
-  public static String generateReceipt(Map<String,Object> order){
+  public static double calculateOrderTotal(Map<String,Object> orderMap){
+    Order order = Order.fromMap(orderMap);
+    return calculateOrderTotal(order);
+  }
+
+  private static String generateReceipt(Order order){
     StringBuilder receipt = new StringBuilder();
     receipt.append("*** BYTE & BEAN ***\n");
 
-    receipt.append("VIP:").append(Boolean.TRUE.equals(order.get("vip")) ? "YES" : "NO")
-      .append(" | HAPPY:").append(Boolean.TRUE.equals(order.get("happyHour")) ? "YES" : "NO").append("\n");
+    receipt.append("VIP:").append(order.vip ? "YES" : "NO")
+      .append(" | HAPPY:").append(order.happyHour ? "YES" : "NO").append("\n");
 
-    List<String> items = (List<String>) order.get("items");
+    List<OrderItem> items = order.items;
 
     for(int i = 0; i < items.size(); i++){
-      String item = items.get(i);
-      ParsedItem parsedItem = parseItem(item);
+      OrderItem parsedItem = items.get(i);
 
       receipt.append(parsedItem.product).append(" ")
       .append(parsedItem.size).append(" x")
@@ -171,10 +202,15 @@ public class CoffeeBad {
       .append(parsedItem.extras).append("\n");
     }
 
-    receipt.append("COUPON:").append(order.get("coupon") == null ? "" : (String) order.get("coupon")).append("\n");
+    receipt.append("COUPON:").append(order.coupon == null ? "" : order.coupon).append("\n");
     receipt.append("TOTAL=").append(calculateOrderTotal(order)).append(" EUR\n");
 
     return receipt.toString();
+  }
+
+  public static String generateReceipt(Map<String,Object> orderMap){
+    Order order = Order.fromMap(orderMap);
+    return generateReceipt(order);
   }
 
   public static void main(String[] args){
