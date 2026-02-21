@@ -37,6 +37,12 @@ public class CoffeeBad {
       this.quantity = quantity;
       this.extras = extras;
     }
+
+    double calculateBaseAndExtras(boolean happyHour){
+      double base = calculateBasePrice(product, size, happyHour);
+      double extrasPrice = calculateExtrasPrice(extras);
+      return (base + extrasPrice) * quantity;
+    }
   }
 
   private static class Order {
@@ -65,6 +71,54 @@ public class CoffeeBad {
       boolean happyHour = Boolean.TRUE.equals(map.get("happyHour"));
 
       return new Order(parsedItem, coupon, vip, happyHour);
+    }
+
+    double calculateSubTotal(){
+      double subTotal = 0;
+      for(OrderItem item : items){
+        subTotal += item.calculateBaseAndExtras(happyHour);
+      }
+
+      return subTotal;
+    }
+
+    double applyDiscounts(double subTotal){
+      subTotal = applyCouponDiscount(subTotal, this);
+      subTotal = applyVipDiscount(subTotal, vip);
+      return subTotal;
+    }
+
+    double applyVatAndRound(double subTotal){
+      subTotal += subTotal * VAT_RATE;
+      return Math.round(subTotal * ROUNDING_FACTOR) / ROUNDING_FACTOR;
+    }
+
+    double calculateTotal(){
+      double subTotal = calculateSubTotal();
+      subTotal = applyDiscounts(subTotal);
+      return applyVatAndRound(subTotal);
+    }
+
+    String generateReceipt(){
+      StringBuilder receipt = new StringBuilder();
+      receipt.append("*** BYTE & BEAN ***\n");
+
+      receipt.append("VIP:").append(vip ? "YES" : "NO")
+        .append(" | HAPPY:").append(happyHour ? "YES" : "NO").append("\n");
+
+      for(int i = 0; i < items.size(); i++){
+        OrderItem parsedItem = items.get(i);
+
+        receipt.append(parsedItem.product).append(" ")
+        .append(parsedItem.size).append(" x")
+        .append(parsedItem.quantity).append(" extras:")
+        .append(parsedItem.extras).append("\n");
+      }
+
+      receipt.append("COUPON:").append(coupon == null ? "" : coupon).append("\n");
+      receipt.append("TOTAL=").append(calculateTotal()).append(" EUR\n");
+
+      return receipt.toString();
     }
 
   }
@@ -156,61 +210,14 @@ public class CoffeeBad {
       return basePrice;
   }
 
-  private static double calculateOrderTotal(Order order){
-    double subTotal = 0;
-
-    List<OrderItem> items = order.items;
-
-    for(int i=0; i<items.size(); i++){
-      OrderItem parsedItem = items.get(i);
-
-      boolean happyHour = order.happyHour;
-      double basePrice = calculateBasePrice(parsedItem.product, parsedItem.size, happyHour);
-      double extrasPrice = calculateExtrasPrice(parsedItem.extras);
-
-      subTotal += (basePrice * parsedItem.quantity) + (extrasPrice * parsedItem.quantity);
-    }
-    
-    subTotal = applyCouponDiscount(subTotal, order);
-    subTotal = applyVipDiscount(subTotal, order.vip);
-
-    subTotal = subTotal + (subTotal * VAT_RATE);
-    subTotal = Math.round(subTotal * ROUNDING_FACTOR) / ROUNDING_FACTOR;
-    return subTotal;
-  }
-
   public static double calculateOrderTotal(Map<String,Object> orderMap){
     Order order = Order.fromMap(orderMap);
-    return calculateOrderTotal(order);
-  }
-
-  private static String generateReceipt(Order order){
-    StringBuilder receipt = new StringBuilder();
-    receipt.append("*** BYTE & BEAN ***\n");
-
-    receipt.append("VIP:").append(order.vip ? "YES" : "NO")
-      .append(" | HAPPY:").append(order.happyHour ? "YES" : "NO").append("\n");
-
-    List<OrderItem> items = order.items;
-
-    for(int i = 0; i < items.size(); i++){
-      OrderItem parsedItem = items.get(i);
-
-      receipt.append(parsedItem.product).append(" ")
-      .append(parsedItem.size).append(" x")
-      .append(parsedItem.quantity).append(" extras:")
-      .append(parsedItem.extras).append("\n");
-    }
-
-    receipt.append("COUPON:").append(order.coupon == null ? "" : order.coupon).append("\n");
-    receipt.append("TOTAL=").append(calculateOrderTotal(order)).append(" EUR\n");
-
-    return receipt.toString();
+    return order.calculateTotal();
   }
 
   public static String generateReceipt(Map<String,Object> orderMap){
     Order order = Order.fromMap(orderMap);
-    return generateReceipt(order);
+    return order.generateReceipt();
   }
 
   public static void main(String[] args){
