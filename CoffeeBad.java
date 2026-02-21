@@ -25,6 +25,31 @@ public class CoffeeBad {
 
   private static final double ROUNDING_FACTOR = 100.0;
 
+  private static class ParsedItem {
+    String product;
+    String size;
+    int quantity;
+    String extras;
+
+    ParsedItem(String product, String size, int quantity, String extras){
+      this.product = product;
+      this.size = size;
+      this.quantity = quantity;
+      this.extras = extras;
+    }
+  }
+
+  private static ParsedItem parseItem(String item){
+    String[] itemParts = item.split("\\|");
+
+    String product = itemParts[0];
+    String size = itemParts[1];
+    int quantity = Integer.parseInt(itemParts.length > 2 && itemParts[2].length() > 0 ? itemParts[2] : "1");
+    String extras = itemParts.length > 3 ? itemParts[3] : "";
+
+    return new ParsedItem(product, size, quantity, extras);
+  }
+
   private static double applyCouponDiscount(double subTotal, String coupon, List<String> items){
     if(coupon != null && !coupon.equals("")){
       if(coupon.equals("SAVE10")){
@@ -106,18 +131,14 @@ public class CoffeeBad {
 
     for(int i=0; i<items.size(); i++){
       String item = items.get(i);
-      String[] itemParts = item.split("\\|");
-
-      String product = itemParts[0];
-      String size = itemParts[1];
-      int quantity = Integer.parseInt(itemParts.length > 2 && itemParts[2].length() > 0 ? itemParts[2] : "1");
-      String extras = itemParts.length > 3 ? itemParts[3] : "";
+      
+      ParsedItem parsedItem = parseItem(item); 
 
       boolean happyHour = Boolean.TRUE.equals(order.get("happyHour"));
-      double basePrice = calculateBasePrice(product, size, happyHour);
-      double extrasPrice = calculateExtrasPrice(extras);
+      double basePrice = calculateBasePrice(parsedItem.product, parsedItem.size, happyHour);
+      double extrasPrice = calculateExtrasPrice(parsedItem.extras);
 
-      subTotal = subTotal + ( (basePrice * quantity) + (extrasPrice * quantity) );
+      subTotal = subTotal + ( (basePrice * parsedItem.quantity) + (extrasPrice * parsedItem.quantity) );
     }
 
     String coupon = (String) order.get("coupon");
@@ -141,10 +162,13 @@ public class CoffeeBad {
     List<String> items = (List<String>) order.get("items");
 
     for(int i = 0; i < items.size(); i++){
-      String[] parts = items.get(i).split("\\|");
+      String item = items.get(i);
+      ParsedItem parsedItem = parseItem(item);
 
-      receipt.append(parts[0]).append(" ").append(parts[1]).append(" x").append(parts[2]).append(" extras:")
-       .append(parts.length> 3 ? parts[3] : "").append("\n");
+      receipt.append(parsedItem.product).append(" ")
+      .append(parsedItem.size).append(" x")
+      .append(parsedItem.quantity).append(" extras:")
+      .append(parsedItem.extras).append("\n");
     }
 
     receipt.append("COUPON:").append(order.get("coupon") == null ? "" : (String) order.get("coupon")).append("\n");
