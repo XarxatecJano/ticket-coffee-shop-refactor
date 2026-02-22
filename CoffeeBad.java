@@ -127,7 +127,24 @@ public class CoffeeBad {
             return total; 
         } 
     }
+    public static class OrderCalculator { 
+        private final PricingService pricing = new PricingService(); 
+        private final TaxService tax = new TaxService(); 
+        private final VipService vip = new VipService(); 
+        public double calculate(Order order) { 
+            double total = pricing.subtotal(order.lines, order.happyHour);
 
+            if (order.coupon != null && !order.coupon.isEmpty()) { 
+                Discount discount = DiscountRegistry.COUPONS.get(order.coupon);
+                if (discount != null) {
+                    total = discount.apply(total, order.lines);
+                    } 
+                } 
+                
+                total = vip.applyVip(total, order.vip); 
+                total = tax.applyTax(total); 
+                return Math.round(total * 100.0) / 100.0; } }
+                
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
