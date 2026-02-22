@@ -111,6 +111,23 @@ public class CoffeeBad {
             ); 
         }
 
+    public static class TaxService { 
+        private static final double TAX_RATE = 0.10; 
+        public double applyTax(double total) { 
+            return total * (1 + TAX_RATE); 
+        } 
+    } 
+    public static class VipService { 
+        private static final double VIP_THRESHOLD = 10.0; 
+        private static final double VIP_DISCOUNT = 0.5; 
+        public double applyVip(double total, boolean vip) {
+             if (vip && total > VIP_THRESHOLD) { 
+                return total - VIP_DISCOUNT; 
+            } 
+            return total; 
+        } 
+    }
+
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
