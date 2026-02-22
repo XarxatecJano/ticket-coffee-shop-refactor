@@ -44,7 +44,8 @@ public class Order {
         int quantity = Integer.parseInt(itemParts.length > 2 && itemParts[2].length() > 0 ? itemParts[2] : "1");
         String extras = itemParts.length > 3 ? itemParts[3] : "";
 
-        return new OrderItem(product, size, quantity, extras);
+        IPricer pricer = Pricers.forProduct(product);
+        return new OrderItem(product, pricer, size, quantity, extras);
     }
 
     double calculateSubTotal(){
@@ -64,7 +65,7 @@ public class Order {
             subTotal = subTotal - (subTotal * SAVE10_DISCOUNT);
         } else if(coupon.equals("FREEMUFFIN")) {
             for(OrderItem parseItem : items){
-            if(parseItem.product.equals("muffin")){ 
+            if(parseItem.isMuffin()){ 
                 return subTotal - MUFFIN_PRICE;
             }
             }
@@ -109,7 +110,7 @@ public class Order {
       for(int i = 0; i < items.size(); i++){
         OrderItem parsedItem = items.get(i);
 
-        receipt.append(parsedItem.product).append(" ")
+        receipt.append(parsedItem.getProductName()).append(" ")
         .append(parsedItem.size).append(" x")
         .append(parsedItem.quantity).append(" extras:")
         .append(parsedItem.extras).append("\n");
