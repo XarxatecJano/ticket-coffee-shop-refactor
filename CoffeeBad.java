@@ -15,6 +15,19 @@ public class CoffeeBad {
         MILK, SHOT, SYRUP
     }
 
+    public static class Menu {
+        public static final Map<String, Map<String, Double>> BASE_PRICES = Map.of(
+            "coffee", Map.of("S", 2.0, "M", 2.5, "L", 3.0), 
+            "tea", Map.of("S", 1.5, "M", 2.0, "L", 2.3), 
+            "muffin", Map.of("ANY", 2.2) 
+            );
+        public static final Map<String, Double> EXTRA_PRICES = Map.of(
+            "milk", 0.2, 
+            "shot", 0.8, 
+            "syrup", 0.5 
+            );
+     }      
+
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
