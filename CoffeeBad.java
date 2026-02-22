@@ -3,17 +3,29 @@ import java.util.*;
 
 public class CoffeeBad {
 
-  public static double t(Map<String,Object> o){
-    double s=0;
-    List<String> items=(List<String>)o.get("items");
-    for(int i=0;i<items.size();i++){
-      String p=items.get(i);
-      String[] a=p.split("\\|");
-      String it=a[0];
-      String z=a[1];
-      int q=Integer.parseInt(a.length>2 && a[2].length()>0 ? a[2] : "1");
-      String ex=a.length>3 ? a[3] : "";
-      double b=0;
+    public enum ItemType{
+        COFFEE, TEA, MUFFIN
+    }
+
+    public enum Size{
+        S, M, L
+    }
+
+    public enum Extra{
+        MILK, SHOT, SYRUP
+    }
+
+    public static double t(Map<String,Object> o){
+        double s=0;
+        List<String> items=(List<String>)o.get("items");
+        for(int i=0;i<items.size();i++){
+        String p=items.get(i);
+        String[] a=p.split("\\|");
+        String it=a[0];
+        String z=a[1];
+        int q=Integer.parseInt(a.length>2 && a[2].length()>0 ? a[2] : "1");
+        String ex=a.length>3 ? a[3] : "";
+        double b=0;
 
       if(it.equals("coffee")){
         if(z.equals("S")){b=2.0;}else if(z.equals("M")){b=2.5;}else{b=3.0;}
