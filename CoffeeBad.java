@@ -55,6 +55,32 @@ public class CoffeeBad {
                 this.coupon = coupon; 
                 } 
             }
+    public static class PricingService { 
+        public double priceLine(OrderLine line, boolean happyHour) {
+            String type = line.type.name().toLowerCase(); 
+            String size = line.size.name(); 
+            Map<String, Double> sizeMap = Menu.BASE_PRICES.get(type); 
+            double base = sizeMap.getOrDefault(size, sizeMap.get("ANY"));
+            
+            if (happyHour && line.type == ItemType.COFFEE) { 
+                base *= 0.8;
+            }
+            double extras = 0; 
+            for (Extra e : line.extras) { 
+                extras += Menu.EXTRA_PRICES.get(e.name().toLowerCase()); 
+                } 
+                return (base + extras) * line.quantity; 
+                } 
+                
+                public double subtotal(List<OrderLine> lines, boolean happyHour) { 
+                    double sum = 0; 
+                    for (OrderLine l : lines) { 
+                        sum += priceLine(l, happyHour); 
+                        } 
+                        return sum; 
+                        } 
+                }
+
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
