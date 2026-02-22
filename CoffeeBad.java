@@ -167,6 +167,53 @@ public class CoffeeBad {
                 } 
             }
 
+    private static ItemType parseItemType(String raw) { 
+        switch (raw.toLowerCase()) { 
+            case "coffee": return ItemType.COFFEE; 
+            case "tea": return ItemType.TEA; 
+            case "muffin": return ItemType.MUFFIN; 
+            default: throw new IllegalArgumentException("Unknown item: " + raw); 
+            } 
+        } 
+        private static Size parseSize(String raw) { 
+            if (raw == null || raw.isEmpty()) return Size.S;
+             // temporary fallback
+            return Size.valueOf(raw); 
+        } 
+
+    private static Extra parseExtra(String raw) { 
+        switch (raw.toLowerCase()) { 
+            case "milk": return Extra.MILK; 
+            case "shot": return Extra.SHOT; 
+            case "syrup": return Extra.SYRUP; 
+            default: throw new IllegalArgumentException("Unknown extra: " + raw); 
+            } 
+        } 
+    private static List<OrderLine> parseItems(List<String> itemStrings) { 
+        List<OrderLine> result = new ArrayList<>(); 
+        for (String str : itemStrings) { 
+            String[] parts = str.split("\\|"); 
+            String name = parts[0]; 
+            String sizeStr = parts.length > 1 ? parts[1] : ""; 
+            String qtyStr = parts.length > 2 && !parts[2].isEmpty() ? parts[2] : "1"; 
+            String extrasStr = parts.length > 3 ? parts[3] : ""; 
+            
+            ItemType type = parseItemType(name); 
+            Size size = parseSize(sizeStr); 
+            int quantity = Integer.parseInt(qtyStr); 
+            List<Extra> extras = new ArrayList<>(); 
+            if (!extrasStr.isEmpty()) { 
+                for (String e : extrasStr.split(",")) { 
+                    if (!e.isBlank()) { 
+                        extras.add(parseExtra(e.trim())); 
+                    } 
+                } 
+            } 
+            result.add(new OrderLine(type, size, quantity, extras)); 
+            } 
+            return result;
+        }
+
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
