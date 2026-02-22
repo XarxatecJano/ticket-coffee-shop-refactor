@@ -150,166 +150,99 @@ public class CoffeeBad {
             StringBuilder sb = new StringBuilder("*** BYTE & BEAN ***\n"); 
             sb.append("VIP:").append(order.vip ? "YES" : "NO") 
             .append(" | HAPPY:").append(order.happyHour ? "YES" : "NO") 
-            .append("\n"); 
-            
-            for (OrderLine l : order.lines) { 
+            .append("\n"); for (OrderLine l : order.lines) { 
                 sb.append(l.type).append(" ") 
-                .append(l.size)
-                .append(" x") 
-                .append(l.quantity)
-                .append(" extras:") 
+                .append(l.size).append(" x") 
+                .append(l.quantity).append(" extras:") 
                 .append(l.extras.isEmpty() ? "" : l.extras) 
                 .append("\n"); 
-                } 
-                sb.append("COUPON:").append(order.coupon == null ? "" : order.coupon) 
-                .append("\nTOTAL=").append(total).append(" EUR\n"); 
-                return sb.toString(); 
-                } 
-            }
-
-    private static ItemType parseItemType(String raw) { 
-        switch (raw.toLowerCase()) { 
-            case "coffee": return ItemType.COFFEE; 
-            case "tea": return ItemType.TEA; 
-            case "muffin": return ItemType.MUFFIN; 
-            default: throw new IllegalArgumentException("Unknown item: " + raw); 
+            } 
+            sb.append("COUPON:").append(order.coupon == null ? "" : order.coupon)
+            .append("\nTOTAL=").append(total).append(" EUR\n"); 
+            return sb.toString(); 
             } 
         } 
-        private static Size parseSize(String raw) { 
-            if (raw == null || raw.isEmpty()) return Size.S;
-             // temporary fallback
-            return Size.valueOf(raw); 
-        } 
-
-    private static Extra parseExtra(String raw) { 
-        switch (raw.toLowerCase()) { 
-            case "milk": return Extra.MILK; 
-            case "shot": return Extra.SHOT; 
-            case "syrup": return Extra.SYRUP; 
-            default: throw new IllegalArgumentException("Unknown extra: " + raw); 
+        private static ItemType parseItemType(String raw) { 
+            return switch (raw.toLowerCase()) { 
+                case "coffee" -> ItemType.COFFEE; 
+                case "tea" -> ItemType.TEA; 
+                case "muffin" -> ItemType.MUFFIN; 
+                default -> throw new IllegalArgumentException("Unknown item: " + raw); 
+                }; 
             } 
-        } 
-    private static List<OrderLine> parseItems(List<String> itemStrings) { 
-        List<OrderLine> result = new ArrayList<>(); 
-        for (String str : itemStrings) { 
-            String[] parts = str.split("\\|"); 
-            String name = parts[0]; 
-            String sizeStr = parts.length > 1 ? parts[1] : ""; 
-            String qtyStr = parts.length > 2 && !parts[2].isEmpty() ? parts[2] : "1"; 
-            String extrasStr = parts.length > 3 ? parts[3] : ""; 
-            
-            ItemType type = parseItemType(name); 
-            Size size = parseSize(sizeStr); 
-            int quantity = Integer.parseInt(qtyStr); 
-            List<Extra> extras = new ArrayList<>(); 
-            if (!extrasStr.isEmpty()) { 
-                for (String e : extrasStr.split(",")) { 
-                    if (!e.isBlank()) { 
-                        extras.add(parseExtra(e.trim())); 
+            private static Size parseSize(String raw) { 
+                if (raw == null || raw.isEmpty()) 
+                return Size.ANY; 
+                return Size.valueOf(raw); 
+            } 
+            private static Extra parseExtra(String raw) { 
+                return switch (raw.toLowerCase()) { 
+                    case "milk" -> Extra.MILK; 
+                    case "shot" -> Extra.SHOT; 
+                    case "syrup" -> Extra.SYRUP; 
+                    default -> throw new IllegalArgumentException("Unknown extra: " + raw); 
+                    }; 
+                } 
+            private static List<OrderLine> parseItems(List<String> itemStrings) { 
+                return itemStrings.stream() .flatMap(str -> { 
+                    String[] parts = str.split("\\|"); 
+                    String name = parts[0]; 
+                    String sizeStr = parts.length > 1 ? parts[1] : ""; 
+                    String qtyStr = parts.length > 2 && !parts[2].isEmpty() ? parts[2] : "1"; 
+                    String extrasStr = parts.length > 3 ? parts[3] : ""; 
+                    
+                    ItemType type = parseItemType(name); 
+                    Size size = parseSize(sizeStr); 
+                    int quantity = Integer.parseInt(qtyStr); 
+                    
+                    List<Extra> extras = extrasStr.isEmpty() 
+                    ? List.of() 
+                    : Arrays.stream(extrasStr.split(",")) 
+                    .filter(s -> !s.isBlank()) 
+                    .map(String::trim) 
+                    .map(CoffeeBad::parseExtra) 
+                    .toList(); 
+                    
+                return Stream.of(new OrderLine(type, size, quantity, extras));
+                 }) 
+                 .toList(); 
+            } 
+            public static void main(String[] args) { 
+                OrderCalculator calculator = new OrderCalculator(); 
+                ReceiptService receiptService = new ReceiptService(); 
+                List<Map<String, Object>> rawOrders = List.of( 
+                    Map.of( 
+                        "items", List.of("coffee|M|2|milk,shot", "tea|S|1|", "muffin|S|1|"),
+                        "coupon", "SAVE10", 
+                        "vip", true, 
+                        "happyHour", true, 
+                        "expectedTotal", 9.60 
+                        ), 
+                        Map.of( 
+                            "items", List.of("muffin|L|2|", "coffee|S|1|syrup"), 
+                            "coupon", "FREEMUFFIN", 
+                            "vip", false, 
+                            "happyHour", false, 
+                            "expectedTotal", 5.17 
+                            ) 
+                        ); 
+                        rawOrders.forEach(raw -> { 
+                            @SuppressWarnings("unchecked") 
+                            List<String> itemStrings = (List<String>) raw.get("items"); 
+                            List<OrderLine> lines = parseItems(itemStrings); 
+                            
+                            boolean vip = (boolean) raw.get("vip"); 
+                            boolean happyHour = (boolean) raw.get("happyHour"); 
+                            String coupon = (String) raw.get("coupon"); 
+                            double expected = (double) raw.get("expectedTotal"); 
+                            
+                            Order order = new Order(lines, vip, happyHour, coupon); 
+                            double total = calculator.calculate(order); 
+                            if (Math.abs(total - expected) > 0.001) { 
+                                throw new AssertionError("Expected " + expected + " but got " + total); 
+                            } 
+                            System.out.println(receiptService.generate(order, total)); 
+                            }); 
+                    System.out.println("All assertions passed ✅"); 
                     } 
-                } 
-            } 
-            result.add(new OrderLine(type, size, quantity, extras)); 
-            } 
-            return result;
-        }
-
-    public static double t(Map<String,Object> o){
-        double s=0;
-        List<String> items=(List<String>)o.get("items");
-        for(int i=0;i<items.size();i++){
-        String p=items.get(i);
-        String[] a=p.split("\\|");
-        String it=a[0];
-        String z=a[1];
-        int q=Integer.parseInt(a.length>2 && a[2].length()>0 ? a[2] : "1");
-        String ex=a.length>3 ? a[3] : "";
-        double b=0;
-
-      if(it.equals("coffee")){
-        if(z.equals("S")){b=2.0;}else if(z.equals("M")){b=2.5;}else{b=3.0;}
-        if(Boolean.TRUE.equals(o.get("happyHour"))){ b=b-(b*0.2); }
-      }else if(it.equals("tea")){
-        if(z.equals("S")){b=1.5;}else if(z.equals("M")){b=2.0;}else{b=2.3;}
-      }else if(it.equals("muffin")){
-        b=2.2;
-      }else{
-        b=0;
-      }
-
-      double e=0;
-      if(ex!=null && ex.length()>0){
-        String[] parts=ex.split(",");
-        for(int k=0;k<parts.length;k++){
-          if(parts[k].equals("milk")){e+=0.2;}
-          else if(parts[k].equals("shot")){e+=0.8;}
-          else if(parts[k].equals("syrup")){e+=0.5;}
-          else{e+=0;}
-        }
-      }
-
-      s = s + ( (b*q) + (e*q) );
-    }
-
-    String coupon=(String)o.get("coupon");
-    if(coupon!=null && !coupon.equals("")){
-      if(coupon.equals("SAVE10")){
-        s = s - (s*0.10);
-      }else if(coupon.equals("FREEMUFFIN")){
-        boolean found=false;
-        for(String it : items){
-          if(it.startsWith("muffin|")){ found=true; break; }
-        }
-        if(found){ s = s - 2.2; }
-      }
-    }
-
-    Boolean vip=(Boolean)o.get("vip");
-    if(Boolean.TRUE.equals(vip)){
-      if(s>10){ s = s - 0.5; }
-    }
-
-    s = s + (s*0.10);
-    s = Math.round(s*100.0)/100.0;
-    return s;
-  }
-
-  public static String r(Map<String,Object> o){
-    StringBuilder x=new StringBuilder();
-    x.append("*** BYTE & BEAN ***\n");
-    x.append("VIP:").append(Boolean.TRUE.equals(o.get("vip"))?"YES":"NO")
-     .append(" | HAPPY:").append(Boolean.TRUE.equals(o.get("happyHour"))?"YES":"NO").append("\n");
-    List<String> items=(List<String>)o.get("items");
-    for(int i=0;i<items.size();i++){
-      String[] a=items.get(i).split("\\|");
-      x.append(a[0]).append(" ").append(a[1]).append(" x").append(a[2]).append(" extras:")
-       .append(a.length>3 ? a[3] : "").append("\n");
-    }
-    x.append("COUPON:").append(o.get("coupon")==null?"":(String)o.get("coupon")).append("\n");
-    x.append("TOTAL=").append(t(o)).append(" EUR\n");
-    return x.toString();
-  }
-
-  public static void main(String[] args){
-    Map<String,Object> order1=new HashMap<>();
-    order1.put("items", Arrays.asList("coffee|M|2|milk,shot", "tea|S|1|", "muffin|S|1|"));
-    order1.put("coupon","SAVE10");
-    order1.put("vip",true);
-    order1.put("happyHour",true);
-
-    double total1=t(order1);
-    assert total1==9.60 : "order1 total should be 9.60 but was "+total1;
-
-    Map<String,Object> order2=new HashMap<>();
-    order2.put("items", Arrays.asList("muffin|L|2|", "coffee|S|1|syrup"));
-    order2.put("coupon","FREEMUFFIN");
-    order2.put("vip",false);
-    order2.put("happyHour",false);
-
-    double total2=t(order2);
-    assert total2==5.17 : "order2 total should be 5.17 but was "+total2;
-
-    System.out.println(r(order1));
-    System.out.println("All assertions passed ✅");
-  }
-}
+                }
