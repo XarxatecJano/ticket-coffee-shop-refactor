@@ -1,11 +1,6 @@
 import java.util.*;
-import java.util.stream.*;
 
 public class CoffeeBad {
-
-    public enum ItemType {
-        COFFEE, TEA, MUFFIN
-    }
 
     public enum Size {
         S, M, L, ANY
@@ -15,28 +10,86 @@ public class CoffeeBad {
         MILK, SHOT, SYRUP
     }
 
-    public static class Menu {
-        public static final Map<ItemType, Map<Size, Double>> BASE_PRICES = Map.of(
-                ItemType.COFFEE, Map.of(Size.S, 2.0, Size.M, 2.5, Size.L, 3.0),
-                ItemType.TEA, Map.of(Size.S, 1.5, Size.M, 2.0, Size.L, 2.3),
-                ItemType.MUFFIN, Map.of(Size.ANY, 2.2)
+    public interface Product {
+        double basePrice(Size size, boolean happyHour);
+    }
+
+    public static class Coffee implements Product {
+        private static final Map<Size, Double> PRICES = Map.of(
+                Size.S, 2.0,
+                Size.M, 2.5,
+                Size.L, 3.0
         );
 
-        public static final Map<Extra, Double> EXTRA_PRICES = Map.of(
+        @Override
+        public double basePrice(Size size, boolean happyHour) {
+            double base = PRICES.get(size);
+            return happyHour ? base * 0.8 : base;
+        }
+    }
+
+    public static class Tea implements Product {
+        private static final Map<Size, Double> PRICES = Map.of(
+                Size.S, 1.5,
+                Size.M, 2.0,
+                Size.L, 2.3
+        );
+
+        @Override
+        public double basePrice(Size size, boolean happyHour) {
+            return PRICES.get(size);
+        }
+    }
+
+    public static class Muffin implements Product {
+        @Override
+        public double basePrice(Size size, boolean happyHour) {
+            return 2.2;
+        }
+    }
+
+    public static class ProductRegistry {
+        private static final Map<String, Product> PRODUCTS = Map.of(
+                "coffee", new Coffee(),
+                "tea", new Tea(),
+                "muffin", new Muffin()
+        );
+
+        public static Product get(String name) {
+            return PRODUCTS.get(name.toLowerCase());
+        }
+    }
+
+    public static class ExtraRegistry {
+        private static final Map<String, Extra> EXTRAS = Map.of(
+                "milk", Extra.MILK,
+                "shot", Extra.SHOT,
+                "syrup", Extra.SYRUP
+        );
+
+        private static final Map<Extra, Double> PRICES = Map.of(
                 Extra.MILK, 0.2,
                 Extra.SHOT, 0.8,
                 Extra.SYRUP, 0.5
         );
+
+        public static Extra get(String name) {
+            return EXTRAS.get(name.toLowerCase());
+        }
+
+        public static double price(Extra e) {
+            return PRICES.get(e);
+        }
     }
 
     public static class OrderLine {
-        public final ItemType type;
+        public final Product product;
         public final Size size;
         public final int quantity;
         public final List<Extra> extras;
 
-        public OrderLine(ItemType type, Size size, int quantity, List<Extra> extras) {
-            this.type = type;
+        public OrderLine(Product product, Size size, int quantity, List<Extra> extras) {
+            this.product = product;
             this.size = size;
             this.quantity = quantity;
             this.extras = extras;
@@ -58,19 +111,11 @@ public class CoffeeBad {
     }
 
     public static class PricingService {
-
         public double priceLine(OrderLine line, boolean happyHour) {
-            Map<Size, Double> sizeMap = Menu.BASE_PRICES.get(line.type);
-            double base = sizeMap.getOrDefault(line.size, sizeMap.get(Size.ANY));
-
-            if (happyHour && line.type == ItemType.COFFEE) {
-                base *= 0.8; 
-            }
-
+            double base = line.product.basePrice(line.size, happyHour);
             double extras = line.extras.stream()
-                    .mapToDouble(e -> Menu.EXTRA_PRICES.get(e))
+                    .mapToDouble(ExtraRegistry::price)
                     .sum();
-
             return (base + extras) * line.quantity;
         }
 
@@ -93,39 +138,33 @@ public class CoffeeBad {
     }
 
     public static class FreeMuffinDiscount implements Discount {
-        private static final double MUFFIN_PRICE = 2.2;
-
         @Override
         public double apply(double total, List<OrderLine> lines) {
-            boolean hasMuffin = lines.stream().anyMatch(l -> l.type == ItemType.MUFFIN);
-            return hasMuffin ? total - MUFFIN_PRICE : total;
+            boolean hasMuffin = lines.stream().anyMatch(l -> l.product instanceof Muffin);
+            return hasMuffin ? total - 2.2 : total;
         }
     }
 
     public static class DiscountRegistry {
-        public static final Map<String, Discount> COUPONS = Map.of(
+        private static final Map<String, Discount> COUPONS = Map.of(
                 "SAVE10", new Save10Discount(),
                 "FREEMUFFIN", new FreeMuffinDiscount()
         );
+
+        public static Discount get(String code) {
+            return COUPONS.get(code);
+        }
     }
 
     public static class TaxService {
-        private static final double TAX_RATE = 0.10;
-
         public double applyTax(double total) {
-            return total * (1 + TAX_RATE);
+            return total * 1.10;
         }
     }
 
     public static class VipService {
-        private static final double VIP_THRESHOLD = 10.0;
-        private static final double VIP_DISCOUNT = 0.5;
-
         public double applyVip(double total, boolean vip) {
-            if (vip && total > VIP_THRESHOLD) {
-                return total - VIP_DISCOUNT;
-            }
-            return total;
+            return vip && total > 10 ? total - 0.5 : total;
         }
     }
 
@@ -136,17 +175,12 @@ public class CoffeeBad {
 
         public double calculate(Order order) {
             double total = pricing.subtotal(order.lines, order.happyHour);
-
             if (order.coupon != null && !order.coupon.isEmpty()) {
-                Discount discount = DiscountRegistry.COUPONS.get(order.coupon);
-                if (discount != null) {
-                    total = discount.apply(total, order.lines);
-                }
+                Discount d = DiscountRegistry.get(order.coupon);
+                if (d != null) total = d.apply(total, order.lines);
             }
-
             total = vip.applyVip(total, order.vip);
             total = tax.applyTax(total);
-
             return Math.round(total * 100.0) / 100.0;
         }
     }
@@ -154,33 +188,20 @@ public class CoffeeBad {
     public static class ReceiptService {
         public String generate(Order order, double total) {
             StringBuilder sb = new StringBuilder("*** BYTE & BEAN ***\n");
-
             sb.append("VIP:").append(order.vip ? "YES" : "NO")
               .append(" | HAPPY:").append(order.happyHour ? "YES" : "NO")
               .append("\n");
-
             for (OrderLine l : order.lines) {
-                sb.append(l.type).append(" ")
-                  .append(l.size).append(" x")
-                  .append(l.quantity).append(" extras:")
-                  .append(l.extras.isEmpty() ? "" : l.extras)
+                sb.append(l.product.getClass().getSimpleName().toUpperCase())
+                  .append(" ").append(l.size)
+                  .append(" x").append(l.quantity)
+                  .append(" extras:").append(l.extras)
                   .append("\n");
             }
-
             sb.append("COUPON:").append(order.coupon == null ? "" : order.coupon)
               .append("\nTOTAL=").append(total).append(" EUR\n");
-
             return sb.toString();
         }
-    }
-
-    private static ItemType parseItemType(String raw) {
-        return switch (raw.toLowerCase()) {
-            case "coffee" -> ItemType.COFFEE;
-            case "tea" -> ItemType.TEA;
-            case "muffin" -> ItemType.MUFFIN;
-            default -> throw new IllegalArgumentException("Unknown item: " + raw);
-        };
     }
 
     private static Size parseSize(String raw) {
@@ -188,37 +209,20 @@ public class CoffeeBad {
         return Size.valueOf(raw);
     }
 
-    private static Extra parseExtra(String raw) {
-        return switch (raw.toLowerCase()) {
-            case "milk" -> Extra.MILK;
-            case "shot" -> Extra.SHOT;
-            case "syrup" -> Extra.SYRUP;
-            default -> throw new IllegalArgumentException("Unknown extra: " + raw);
-        };
-    }
-
     private static List<OrderLine> parseItems(List<String> itemStrings) {
         return itemStrings.stream()
-                .flatMap(str -> {
-                    String[] parts = str.split("\\|");
-                    String name = parts[0];
-                    String sizeStr = parts.length > 1 ? parts[1] : "";
-                    String qtyStr = parts.length > 2 && !parts[2].isEmpty() ? parts[2] : "1";
-                    String extrasStr = parts.length > 3 ? parts[3] : "";
-
-                    ItemType type = parseItemType(name);
-                    Size size = parseSize(sizeStr);
-                    int quantity = Integer.parseInt(qtyStr);
-
-                    List<Extra> extras = extrasStr.isEmpty()
-                            ? List.of()
-                            : Arrays.stream(extrasStr.split(","))
-                                    .filter(s -> !s.isBlank())
+                .map(str -> {
+                    String[] p = str.split("\\|");
+                    Product product = ProductRegistry.get(p[0]);
+                    Size size = parseSize(p[1]);
+                    int qty = Integer.parseInt(p.length > 2 && !p[2].isEmpty() ? p[2] : "1");
+                    List<Extra> extras = p.length > 3 && !p[3].isEmpty()
+                            ? Arrays.stream(p[3].split(","))
                                     .map(String::trim)
-                                    .map(CoffeeBad::parseExtra)
-                                    .toList();
-
-                    return Stream.of(new OrderLine(type, size, quantity, extras));
+                                    .map(ExtraRegistry::get)
+                                    .toList()
+                            : List.of();
+                    return new OrderLine(product, size, qty, extras);
                 })
                 .toList();
     }
@@ -245,26 +249,14 @@ public class CoffeeBad {
         );
 
         rawOrders.forEach(raw -> {
-            @SuppressWarnings("unchecked")
-            List<String> itemStrings = (List<String>) raw.get("items");
-            List<OrderLine> lines = parseItems(itemStrings);
-
-            boolean vip = (boolean) raw.get("vip");
-            boolean happyHour = (boolean) raw.get("happyHour");
-            String coupon = (String) raw.get("coupon");
-            double expected = (double) raw.get("expectedTotal");
-
-            Order order = new Order(lines, vip, happyHour, coupon);
+            List<OrderLine> lines = parseItems((List<String>) raw.get("items"));
+            Order order = new Order(lines, (boolean) raw.get("vip"), (boolean) raw.get("happyHour"), (String) raw.get("coupon"));
             double total = calculator.calculate(order);
-
-            if (Math.abs(total - expected) > 0.001) {
-                throw new AssertionError("Expected " + expected + " but got " + total);
-            }
-
+            double expected = (double) raw.get("expectedTotal");
+            if (Math.abs(total - expected) > 0.001) throw new AssertionError("Expected " + expected + " but got " + total);
             System.out.println(receiptService.generate(order, total));
         });
 
-        System.out.println("All assertions passed ✅");
+        System.out.println("All assertions passed");
     }
 }
-
