@@ -228,35 +228,48 @@ public class CoffeeBad {
     }
 
     public static void main(String[] args) {
-        OrderCalculator calculator = new OrderCalculator();
-        ReceiptService receiptService = new ReceiptService();
+    OrderCalculator calculator = new OrderCalculator();
+    ReceiptService receiptService = new ReceiptService();
 
-        List<Map<String, Object>> rawOrders = List.of(
-                Map.of(
-                        "items", List.of("coffee|M|2|milk,shot", "tea|S|1|", "muffin|S|1|"),
-                        "coupon", "SAVE10",
-                        "vip", true,
-                        "happyHour", true,
-                        "expectedTotal", 9.60
-                ),
-                Map.of(
-                        "items", List.of("muffin|L|2|", "coffee|S|1|syrup"),
-                        "coupon", "FREEMUFFIN",
-                        "vip", false,
-                        "happyHour", false,
-                        "expectedTotal", 5.17
-                )
-        );
+    List<Map<String, Object>> rawOrders = List.of(
+            Map.of(
+                    "items", List.of("coffee|M|2|milk,shot", "tea|S|1|", "muffin|S|1|"),
+                    "coupon", "SAVE10",
+                    "vip", true,
+                    "happyHour", true,
+                    "expectedTotal", 9.60
+            ),
+            Map.of(
+                    "items", List.of("muffin|L|2|", "coffee|S|1|syrup"),
+                    "coupon", "FREEMUFFIN",
+                    "vip", false,
+                    "happyHour", false,
+                    "expectedTotal", 5.17
+            )
+    );
 
-        rawOrders.forEach(raw -> {
-            List<OrderLine> lines = parseItems((List<String>) raw.get("items"));
-            Order order = new Order(lines, (boolean) raw.get("vip"), (boolean) raw.get("happyHour"), (String) raw.get("coupon"));
-            double total = calculator.calculate(order);
-            double expected = (double) raw.get("expectedTotal");
-            if (Math.abs(total - expected) > 0.001) throw new AssertionError("Expected " + expected + " but got " + total);
-            System.out.println(receiptService.generate(order, total));
-        });
+    rawOrders.forEach(raw -> {
+        List<?> rawList = (List<?>) raw.get("items");
+        List<String> itemStrings = rawList.stream()
+            .map(Object::toString)
+            .toList();
 
-        System.out.println("All assertions passed");
+        List<OrderLine> lines = parseItems(itemStrings);
+
+        boolean vip = (boolean) raw.get("vip");
+        boolean happyHour = (boolean) raw.get("happyHour");
+        String coupon = (String) raw.get("coupon");
+        double expected = (double) raw.get("expectedTotal");
+
+        Order order = new Order(lines, vip, happyHour, coupon);
+        double total = calculator.calculate(order);
+
+        if (Math.abs(total - expected) > 0.001)
+            throw new AssertionError("Expected " + expected + " but got " + total);
+
+        System.out.println(receiptService.generate(order, total));
+    });
+
+    System.out.println("All assertions passed ✅");
     }
 }
