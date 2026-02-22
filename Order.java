@@ -3,10 +3,6 @@ import java.util.*;
 public class Order {
 
     private static final double VAT_RATE = 0.10;
-    private static final double VIP_DISCOUNT = 0.50;
-    private static final double VIP_THRESHOLD = 10.0;
-    private static final double SAVE10_DISCOUNT = 0.10;
-    private static final double MUFFIN_PRICE = 2.2;
     private static final double ROUNDING_FACTOR = 100.0;
 
     List<OrderItem> items;
@@ -19,6 +15,18 @@ public class Order {
       this.coupon = coupon;
       this.vip = vip;
       this.happyHour = happyHour;
+    }
+
+    List<OrderItem> getItems(){
+      return this.items;
+    }
+
+    public boolean isVip(){
+      return this.vip;
+    }
+
+    public String getCoupon(){
+      return this.coupon;
     }
 
     public static Order fromMap(Map<String, Object> map){
@@ -57,35 +65,12 @@ public class Order {
       return subTotal;
     }
 
-    private static double applyCouponDiscount(double subTotal, Order order){
-        String coupon = order.coupon;
-        List<OrderItem> items = order.items;
-        if(coupon != null && !coupon.equals("")){
-        if(coupon.equals("SAVE10")){
-            subTotal = subTotal - (subTotal * SAVE10_DISCOUNT);
-        } else if(coupon.equals("FREEMUFFIN")) {
-            for(OrderItem parseItem : items){
-            if(parseItem.isMuffin()){ 
-                return subTotal - MUFFIN_PRICE;
-            }
-            }
-        }
-        }
-
-        return subTotal;
-    }
-  
-    private static double applyVipDiscount(double subTotal, boolean vip){
-        if(vip && subTotal > VIP_THRESHOLD){
-        return subTotal - VIP_DISCOUNT;
-        }
-
-        return subTotal;
-    }
-
     double applyDiscounts(double subTotal){
-      subTotal = applyCouponDiscount(subTotal, this);
-      subTotal = applyVipDiscount(subTotal, vip);
+      List<IDiscount> discounts = Discounts.forOrder(this);
+
+      for(int i = 0; i < discounts.size(); i++){
+        subTotal = discounts.get(i).applyDiscount(subTotal, this);
+      }
       return subTotal;
     }
 
