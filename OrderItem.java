@@ -1,10 +1,6 @@
 import java.util.*;
 
 public class OrderItem {
-    
-    private static final double EXTRA_MILK = 0.2;
-    private static final double EXTRA_SHOT = 0.8;
-    private static final double EXTRA_SYRUP = 0.5;
 
     private final String productName;
 
@@ -36,19 +32,18 @@ public class OrderItem {
     }
 
     private static double calculateExtrasPrice(String extras){
-        double extrasPrice = 0;
-        if(extras != null && extras.length() > 0){
-            String[] extraParts = extras.split(",");
-            for(int k = 0; k < extraParts.length; k++){
-            if(extraParts[k].equals("milk")){
-                extrasPrice += EXTRA_MILK;
-            } else if(extraParts[k].equals("shot")){
-                extrasPrice += EXTRA_SHOT;
-            } else if(extraParts[k].equals("syrup")){
-                extrasPrice += EXTRA_SYRUP;
-            }
-            }
+        if(extras == null || extras.length() == 0){
+            return 0;
         }
+
+        double extrasPrice = 0;
+        String[] extraParts = extras.split(",");
+
+            for(int k = 0; k < extraParts.length; k++){
+                String extra = extraParts[k];
+                IExtraPricer pricer = ExtraPrice.createExtra(extra);
+                extrasPrice += pricer.getPrice();
+            }
 
         return extrasPrice;
     }
