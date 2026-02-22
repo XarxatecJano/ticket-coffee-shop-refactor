@@ -144,7 +144,29 @@ public class CoffeeBad {
                 total = vip.applyVip(total, order.vip); 
                 total = tax.applyTax(total); 
                 return Math.round(total * 100.0) / 100.0; } }
-                
+
+    public static class ReceiptService { 
+        public String generate(Order order, double total) { 
+            StringBuilder sb = new StringBuilder("*** BYTE & BEAN ***\n"); 
+            sb.append("VIP:").append(order.vip ? "YES" : "NO") 
+            .append(" | HAPPY:").append(order.happyHour ? "YES" : "NO") 
+            .append("\n"); 
+            
+            for (OrderLine l : order.lines) { 
+                sb.append(l.type).append(" ") 
+                .append(l.size)
+                .append(" x") 
+                .append(l.quantity)
+                .append(" extras:") 
+                .append(l.extras.isEmpty() ? "" : l.extras) 
+                .append("\n"); 
+                } 
+                sb.append("COUPON:").append(order.coupon == null ? "" : order.coupon) 
+                .append("\nTOTAL=").append(total).append(" EUR\n"); 
+                return sb.toString(); 
+                } 
+            }
+
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
