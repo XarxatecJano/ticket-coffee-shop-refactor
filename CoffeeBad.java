@@ -81,6 +81,36 @@ public class CoffeeBad {
                         } 
                 }
 
+    public interface Discount { 
+        double apply(double total, List<OrderLine> lines); 
+        } 
+        public static class Save10Discount implements Discount { 
+            @Override 
+            public double apply(double total, List<OrderLine> lines) { 
+                return total * 0.9; 
+            } 
+        } 
+        
+        public static class FreeMuffinDiscount implements Discount { 
+            private static final double MUFFIN_PRICE = 2.2;
+            @Override 
+            public double apply(double total, List<OrderLine> lines) { 
+                boolean hasMuffin = false; 
+                for (OrderLine l : lines) { 
+                    if (l.type == ItemType.MUFFIN) { 
+                        hasMuffin = true; break;
+                        } 
+                    } 
+                    return hasMuffin ? total - MUFFIN_PRICE : total; 
+                }
+            } 
+        public static class DiscountRegistry { 
+            public static final Map<String, Discount> COUPONS = Map.of( 
+                "SAVE10", new Save10Discount(), 
+                "FREEMUFFIN", new FreeMuffinDiscount() 
+            ); 
+        }
+
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
