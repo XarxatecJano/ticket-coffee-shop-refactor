@@ -28,6 +28,33 @@ public class CoffeeBad {
             );
      }      
 
+    public static class OrderLine { 
+        public final ItemType type; 
+        public final Size size; 
+        public final int quantity; 
+        public final List<Extra> extras;
+         
+        public OrderLine(ItemType type, Size size, int quantity, List<Extra> extras) { 
+            this.type = type; 
+            this.size = size; 
+            this.quantity = quantity; 
+            this.extras = extras; 
+            } 
+        } 
+        
+        public static class Order { 
+            public final List<OrderLine> lines; 
+            public final boolean vip; 
+            public final boolean happyHour; 
+            public final String coupon; 
+            
+            public Order(List<OrderLine> lines, boolean vip, boolean happyHour, String coupon) { 
+                this.lines = lines; 
+                this.vip = vip; 
+                this.happyHour = happyHour; 
+                this.coupon = coupon; 
+                } 
+            }
     public static double t(Map<String,Object> o){
         double s=0;
         List<String> items=(List<String>)o.get("items");
