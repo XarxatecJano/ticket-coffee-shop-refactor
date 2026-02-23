@@ -7,7 +7,7 @@ public class Save10CouponDiscount implements IDiscount {
 
     @Override
     public double applyDiscount(double subTotal, Order order){
-        if(order.getCoupon().equals("SAVE10")){
+        if("SAVE10".equals(order.getCoupon())){
             return subTotal - (subTotal * SAVE10_DISCOUNT);
         }
 

@@ -12,10 +12,10 @@ public class OrderItem {
     private static final double HAPPY_HOUR_DISCOUNT = 0.20;
     private final ProductType productType;
 
-    IPricer pricer;
-    Size size;
-    int quantity;
-    String extras;
+    private final IPricer pricer;
+    private final Size size;
+    private final int quantity;
+    private final String extras;
 
     OrderItem(ProductType productType, IPricer pricer, Size size, int quantity, String extras){
       this.productType = productType;
@@ -47,6 +47,10 @@ public class OrderItem {
 
     public boolean isMuffin() {
         return pricer instanceof MuffinPricer;
+    }
+
+    public double calculateUnitBasePrice(){
+        return pricer.calculateBasePrice(this.size);
     }
 
     double calculateBaseAndExtras(boolean happyHour){

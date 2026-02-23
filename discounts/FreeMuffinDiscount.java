@@ -10,17 +10,28 @@ public class FreeMuffinDiscount implements IDiscount {
 
     @Override
     public double applyDiscount(double subTotal, Order order){
-        if(!order.getCoupon().equals("FREEMUFFIN")){
+        if(!"FREEMUFFIN".equals(order.getCoupon())){
             return subTotal;
         }
 
+        double cheapestMuffin = Double.MAX_VALUE;
+
         List<OrderItem> items = order.getItems();
         for(int i = 0; i < items.size(); i++){
-            if(items.get(i).isMuffin()){
-                return subTotal - MUFFIN_PRICE;
+            OrderItem item = items.get(i);
+            if(item.isMuffin()){
+                double price = item.calculateUnitBasePrice();
+            
+                if(price < cheapestMuffin){
+                    cheapestMuffin = price;
+                }
             }
         }
 
-        return subTotal;
+        if(cheapestMuffin == Double.MAX_VALUE){
+            return subTotal;
+        }
+
+        return subTotal - cheapestMuffin;
     }
 }
