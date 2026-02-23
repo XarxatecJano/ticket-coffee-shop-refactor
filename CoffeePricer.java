@@ -6,20 +6,14 @@ public class CoffeePricer implements IPricer {
     private static final double COFFEE_L = 3.0;
 
     @Override
-    public double calculateBasePrice(String size, boolean happyHour){
+    public double calculateBasePrice(String size){
         double price;
         if(size.equals("S")){
-            price = COFFEE_S;
+            return COFFEE_S;
         } else if(size.equals("M")){
-            price = COFFEE_M;
+            return COFFEE_M;
         } else {
-            price = COFFEE_L;
+            return COFFEE_L;
         }
-
-        if(happyHour){
-            price -= price * HAPPY_HOUR_DISCOUNT;
-        }
-
-        return price;
     }
 }

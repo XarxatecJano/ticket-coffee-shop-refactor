@@ -4,7 +4,7 @@ public class TeaPricer implements IPricer {
     private static final double TEA_L = 2.3;
 
     @Override
-    public double calculateBasePrice(String size, boolean happyHour) {
+    public double calculateBasePrice(String size) {
         if(size.equals("S")){
             return TEA_S;
         } else if(size.equals("M")){

@@ -33,8 +33,17 @@ public class OrderItem {
         return this.extras;
     }
 
+    boolean isCoffee(){
+        return pricer instanceof CoffeePricer;
+    }
+
     double calculateBaseAndExtras(boolean happyHour){
-      double base = pricer.calculateBasePrice(size, happyHour);
+      double base = pricer.calculateBasePrice(size);
+
+        if(happyHour && isCoffee()){
+            base -= base * 0.20;
+        }
+
       double extrasPrice = calculateExtrasPrice(extras);
       return (base + extrasPrice) * quantity;
     }

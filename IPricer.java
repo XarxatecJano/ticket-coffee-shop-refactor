@@ -1,3 +1,3 @@
 public interface IPricer {
-    double calculateBasePrice(String size, boolean happyHour);
+    double calculateBasePrice(String size);
 }
