@@ -21,6 +21,18 @@ public class OrderItem {
         return productName;
     }
 
+    public String getSize() {
+        return this.size;
+    }
+
+    public int getQuantity() {
+        return this.quantity;
+    }
+
+    public String getExtras() {
+        return this.extras;
+    }
+
     double calculateBaseAndExtras(boolean happyHour){
       double base = pricer.calculateBasePrice(size, happyHour);
       double extrasPrice = calculateExtrasPrice(extras);

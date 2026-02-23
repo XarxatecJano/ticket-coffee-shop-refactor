@@ -5,8 +5,6 @@ public class Discounts {
     public static List<IDiscount> forOrder(Order order){
         List<IDiscount> discounts = new ArrayList<>();
 
-        discounts.add(new VipDiscount());
-
         String coupon = order.getCoupon();
         if(coupon == null || coupon.length() == 0){
             return discounts;
@@ -24,6 +22,8 @@ public class Discounts {
             default:
                 break;
         }
+
+        discounts.add(new VipDiscount());
 
         return discounts;
     }

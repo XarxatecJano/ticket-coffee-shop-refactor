@@ -10,6 +10,7 @@ public class CoffeeService {
 
   public static String generateReceipt(Map<String,Object> orderMap){
     Order order = Order.fromMap(orderMap);
-    return order.generateReceipt();
+    ReceiptFormatter formatter = new ReceiptFormatter();
+    return formatter.format(order);
   }
 }

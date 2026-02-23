@@ -25,6 +25,10 @@ public class Order {
       return this.vip;
     }
 
+    public boolean isHappyHour(){
+      return this.happyHour;
+    }
+
     public String getCoupon(){
       return this.coupon;
     }
@@ -83,27 +87,5 @@ public class Order {
       double subTotal = calculateSubTotal();
       subTotal = applyDiscounts(subTotal);
       return applyVatAndRound(subTotal);
-    }
-
-    String generateReceipt(){
-      StringBuilder receipt = new StringBuilder();
-      receipt.append("*** BYTE & BEAN ***\n");
-
-      receipt.append("VIP:").append(vip ? "YES" : "NO")
-        .append(" | HAPPY:").append(happyHour ? "YES" : "NO").append("\n");
-
-      for(int i = 0; i < items.size(); i++){
-        OrderItem parsedItem = items.get(i);
-
-        receipt.append(parsedItem.getProductName()).append(" ")
-        .append(parsedItem.size).append(" x")
-        .append(parsedItem.quantity).append(" extras:")
-        .append(parsedItem.extras).append("\n");
-      }
-
-      receipt.append("COUPON:").append(coupon == null ? "" : coupon).append("\n");
-      receipt.append("TOTAL=").append(calculateTotal()).append(" EUR\n");
-
-      return receipt.toString();
     }
 }
