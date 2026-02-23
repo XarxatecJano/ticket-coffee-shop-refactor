@@ -1,4 +1,4 @@
-package src.main.java.bytebean;
+package src.main.java;
 
 import java.util.Map;
 
@@ -9,8 +9,6 @@ import src.main.java.bytebean.infrastructure.OrderParser;
 
 import java.util.HashMap;
 import java.util.Arrays;
-
-
 
 public class CoffeeBad {
 
@@ -39,8 +37,7 @@ public class CoffeeBad {
         order1.put("items", Arrays.asList(
                 "coffee|M|2|milk,shot",
                 "tea|S|1|",
-                "muffin|S|1|"
-        ));
+                "muffin|S|1|"));
         order1.put("coupon", "SAVE10");
         order1.put("vip", true);
         order1.put("happyHour", true);
@@ -51,8 +48,7 @@ public class CoffeeBad {
         Map<String, Object> order2 = new HashMap<>();
         order2.put("items", Arrays.asList(
                 "muffin|L|2",
-                "coffee|S|1|syrup"
-        ));
+                "coffee|S|1|syrup"));
         order2.put("coupon", "FREEMUFFIN");
         order2.put("vip", false);
         order2.put("happyHour", false);
