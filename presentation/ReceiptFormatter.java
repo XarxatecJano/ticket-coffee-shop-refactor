@@ -1,4 +1,9 @@
+package presentation;
+
 import java.util.*;
+import service.CoffeeService;
+import domain.Order;
+import domain.OrderItem;
 
 public class ReceiptFormatter {
     public String format(Order order){
@@ -12,7 +17,7 @@ public class ReceiptFormatter {
         for(int i = 0; i < items.size(); i++){
             OrderItem parsedItem = items.get(i);
 
-            receipt.append(parsedItem.getProductName()).append(" ")
+            receipt.append(parsedItem.getProductType()).append(" ")
             .append(parsedItem.getSize()).append(" x")
             .append(parsedItem.getQuantity()).append(" extras:")
             .append(parsedItem.getExtras()).append("\n");

@@ -1,3 +1,5 @@
+package extras;
+
 public class ExtraPrice {
     public static IExtraPricer createExtra(String extra){
         switch(extra){

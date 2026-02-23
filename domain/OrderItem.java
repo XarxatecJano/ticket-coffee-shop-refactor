@@ -1,27 +1,35 @@
+package domain;
+
 import java.util.*;
+import pricing.IPricer;
+import extras.IExtraPricer;
+import extras.ExtraPrice;
+import pricing.CoffeePricer;
+import pricing.MuffinPricer;
 
 public class OrderItem {
 
-    private final String productName;
+    private static final double HAPPY_HOUR_DISCOUNT = 0.20;
+    private final ProductType productType;
 
     IPricer pricer;
-    String size;
+    Size size;
     int quantity;
     String extras;
 
-    OrderItem(String productName, IPricer pricer, String size, int quantity, String extras){
-      this.productName = productName;
+    OrderItem(ProductType productType, IPricer pricer, Size size, int quantity, String extras){
+      this.productType = productType;
       this.pricer = pricer;
       this.size = size;
       this.quantity = quantity;
       this.extras = extras;
     }
 
-    String getProductName() {
-        return productName;
+    public ProductType getProductType() {
+        return this.productType;
     }
 
-    public String getSize() {
+    public Size getSize() {
         return this.size;
     }
 
@@ -33,23 +41,23 @@ public class OrderItem {
         return this.extras;
     }
 
-    boolean isCoffee(){
+    public boolean isCoffee(){
         return pricer instanceof CoffeePricer;
+    }
+
+    public boolean isMuffin() {
+        return pricer instanceof MuffinPricer;
     }
 
     double calculateBaseAndExtras(boolean happyHour){
       double base = pricer.calculateBasePrice(size);
 
         if(happyHour && isCoffee()){
-            base -= base * 0.20;
+            base -= base * HAPPY_HOUR_DISCOUNT;
         }
 
       double extrasPrice = calculateExtrasPrice(extras);
       return (base + extrasPrice) * quantity;
-    }
-
-    boolean isMuffin() {
-        return pricer instanceof MuffinPricer;
     }
 
     private static double calculateExtrasPrice(String extras){

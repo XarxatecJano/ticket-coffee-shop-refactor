@@ -1,3 +1,5 @@
+package extras;
+
 public class SyrupExtra implements IExtraPricer {
     private static final double EXTRA_SYRUP = 0.5;
 

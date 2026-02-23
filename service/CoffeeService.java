@@ -1,5 +1,8 @@
+package service;
 
 import java.util.*;
+import domain.Order;
+import presentation.ReceiptFormatter;
 
 public class CoffeeService {
 

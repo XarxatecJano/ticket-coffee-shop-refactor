@@ -1,4 +1,11 @@
+package domain;
+
 import java.util.*;
+import discounts.Discounts;
+import pricing.Pricers;
+import domain.OrderItem;
+import discounts.IDiscount;
+import pricing.IPricer;
 
 public class Order {
 
@@ -17,7 +24,7 @@ public class Order {
       this.happyHour = happyHour;
     }
 
-    List<OrderItem> getItems(){
+    public List<OrderItem> getItems(){
       return this.items;
     }
 
@@ -51,8 +58,8 @@ public class Order {
     private static OrderItem parseItem(String item){
         String[] itemParts = item.split("\\|");
 
-        String product = itemParts[0];
-        String size = itemParts[1];
+        ProductType product = ProductType.valueOf(itemParts[0].toUpperCase());
+        Size size = Size.valueOf(itemParts[1].toUpperCase());
         int quantity = Integer.parseInt(itemParts.length > 2 && itemParts[2].length() > 0 ? itemParts[2] : "1");
         String extras = itemParts.length > 3 ? itemParts[3] : "";
 
@@ -60,7 +67,7 @@ public class Order {
         return new OrderItem(product, pricer, size, quantity, extras);
     }
 
-    double calculateSubTotal(){
+    public double calculateSubTotal(){
       double subTotal = 0;
       for(OrderItem item : items){
         subTotal += item.calculateBaseAndExtras(happyHour);
@@ -83,7 +90,7 @@ public class Order {
       return Math.round(subTotal * ROUNDING_FACTOR) / ROUNDING_FACTOR;
     }
 
-    double calculateTotal(){
+    public double calculateTotal(){
       double subTotal = calculateSubTotal();
       subTotal = applyDiscounts(subTotal);
       return applyVatAndRound(subTotal);

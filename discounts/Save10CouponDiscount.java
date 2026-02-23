@@ -1,3 +1,7 @@
+package discounts;
+
+import domain.Order;
+
 public class Save10CouponDiscount implements IDiscount {
     private static final double SAVE10_DISCOUNT = 0.10;
 
