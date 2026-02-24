@@ -68,6 +68,7 @@ public class CoffeeBad {
   public static String toString (Map<String,Object> order) {
     StringBuilder result = new StringBuilder();
     result.append("*** BYTE & BEAN ***\n");
+    result.append("--------------------\n");
     result.append("VIP:").append(Boolean.TRUE.equals(order.get("vip"))?"YES":"NO")
      .append(" | HAPPY:").append(Boolean.TRUE.equals(order.get("happyHour"))?"YES":"NO").append("\n");
 
@@ -75,7 +76,7 @@ public class CoffeeBad {
     for ( int i=0 ; i<items.size() ; i++) {
       String[] item = items.get(i).split("\\|");
       result.append(item[0]).append(" ").append(item[1]).append(" x").append(item[2]).append(" extras:")
-       .append(item.length>3 ? item[3] : "").append("\n");
+       .append(item.length>3 ? item[3] : "").append(" = ").append(calculateTotalItemPrice(items.get(i), Boolean.TRUE.equals(order.get("happyHour")))).append("\n");
     }
     result.append("COUPON:").append(order.get("coupon")==null?"":(String)order.get("coupon")).append("\n");
     result.append("TOTAL=").append(ticket(order)).append(" EUR\n");

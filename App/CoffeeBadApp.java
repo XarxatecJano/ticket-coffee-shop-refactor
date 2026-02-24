@@ -6,7 +6,8 @@ import Model.*;
 
 public class CoffeeBadApp {
     public static void main(String[] args){
-
+    
+    System.out.println("\n");
     System.out.println("BYTE & BEAN TICKET PRINTING TESTS");  
     System.out.println("\n");
 
@@ -28,7 +29,9 @@ public class CoffeeBadApp {
     double total2=CoffeeBad.ticket(order2);
     assert total2==5.17 : "order2 total should be 5.17 but was "+total2;
 
+    System.out.println("TEST 1");
     System.out.println(CoffeeBad.toString(order1));
+    System.out.println("TEST 2");
     System.out.println(CoffeeBad.toString(order2));
     System.out.println("All assertions passed ✅");
   }
