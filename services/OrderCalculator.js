@@ -21,14 +21,14 @@ const calcItemPrice = (item, isHappyHour) => {
 const applyCoupon = (subtotal, coupon, items) => {
     if (!coupon) return subtotal;
 
-    if (coupon === "SAVE10") {
+    if (coupon === COUPON.CODES.SAVE) {
         return subtotal * COUPON.SAVE_COUPON;
     }
 
-    if (coupon === "FREEMUFFIN") {
+    if (coupon === COUPON.CODES.FREEMUFFIN) {
         const hasMuffin = items.some((item) => item.product === PRODUCTS.muffin);
         if (hasMuffin) {
-            return subtotal - COUPON.FREE_MUFFIN;
+            return subtotal - COUPON.FREEMUFFIN_COUPON;
         }
     }
     return subtotal;
@@ -57,5 +57,3 @@ export class OrderCalculator {
         return totalPrice;
     }
 }
-
-// MAGIC TEXT!!!!!!!!!!!!!!!!!!!!!! coupon === "SAVE10" coupon === "FREEMUFFIN"

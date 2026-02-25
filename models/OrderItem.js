@@ -1,21 +1,25 @@
 import { isValidProduct, isValidSize, isValidExtra } from "../utils/domainValidators.js";
 import { isValidNumber } from "../utils/validators.js";
 import { assertValid } from "../exceptions/assertValid.js";
+import { sanitizeString } from "../utils/sanitizers.js";
 
 const parseExtra = (extraString) => {
     if(!extraString || extraString.length === 0) return [];
 
     const extrasArray = [];
     for(const extra of extraString.split(",")) {
-        assertValid(isValidExtra(extra), `Invalid Extra`);
-        extrasArray.push(extra);
+        const extraClean = sanitizeString(extra);
+        assertValid(isValidExtra(extraClean), `Invalid Extra`);
+        extrasArray.push(extraClean);
     }
     return extrasArray;
 };
 
 export class OrderItem {
     constructor(itemString) {
-        const [product, size, amount, extras = ""] = itemString.split("|");
+        let [product, size, amount, extras = ""] = itemString.split("|");
+        product = sanitizeString(product);
+        size = sanitizeString(size);
 
         assertValid(isValidProduct(product), `Invalid product: ${product}`);
         this.product = product;

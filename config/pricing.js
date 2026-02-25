@@ -11,9 +11,13 @@ export const EXTRA_PRICES = {
 };
 
 export const COUPON = {
+    CODES: {
+        SAVE: "SAVE10",
+        FREEMUFFIN: "FREEMUFFIN"
+    },
     HAPPY_HOUR: 0.8,
     SAVE_COUPON: 0.9,
-    FREE_MUFFIN: BASE_PRICES.muffin.S,
+    FREEMUFFIN_COUPON: BASE_PRICES.muffin.S,
 };
 
 export const VIP_COUPON = {
